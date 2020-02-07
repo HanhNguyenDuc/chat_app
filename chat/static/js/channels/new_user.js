@@ -18,7 +18,7 @@ run = function() {
         for (id in data.html_user) {
             var user = data.html_user[id];
             var user_icon_id = 'user_icon_' + user[0];
-            console.log(user_icon_id);
+            // console.log(user_icon_id);
             // console.log(data.html_user[user]);
             if (user[1] === true) {
                 // console.log("reached here!");
@@ -61,16 +61,12 @@ $('li > *').click(function() {
     }
     // var endpoint_room = "ws://" + window.location.host + "/ws/chat/" + room_name + '/';
     var endpoint_room = "ws://" + window.location.host + "/ws/chat/" + room_name + "/";
-    var socket_room = new WebSocket(endpoint_room);
+    var socket_room = new ReconnectingWebSocket(endpoint_room);
 
     socket_room.onmessage = function(e) {
         var message = JSON.parse(e.data);
         console.log(message);
-        if (user_1 == message.user) {
-            $('#chat').append(make_message_me('2/2/1999', message.user, message.message));
-        } else {
-            $('#chat').append(make_message_you('2/2/1999', message.user, message.message));
-        }
+        $('#chat').append(make_message(user_1 == message.user, message.date, message.user, message.message));
     }
     socket_room.onopen = function(e) {
         console.log(e);
@@ -82,32 +78,22 @@ $('li > *').click(function() {
         console.log(e);
     }
 
-    make_message_me = function(usernameIn, userID, message) {
+    make_message = function(me, usernameIn, userID, message) {
         var date_text = '<h3>' + usernameIn + '</h3>';
         var username_text = '<h2>' + userID + '</h2>';
         var triangle = '<div class="triangle"></div>';
         var mess_box = '<div class="message">' + message + '</div>';
-        return '<li class="me"><div class="entete">' + date_text +
+        return '<li class=' + (me == true ? '"me"' : '"you"') + '><div class="entete">' + date_text +
             username_text + triangle + mess_box + '</div></li>';
 
     }
 
-    make_message_you = function(usernameIn, userID, message) {
-        var date_text = '<h3>' + usernameIn + '</h3>';
-        var username_text = '<h2>' + userID + '</h2>';
-        var triangle = '<div class="triangle"></div>';
-        var mess_box = '<div class="message">' + message + '</div>';
-        return '<li class="you"><div class="entete">' + date_text +
-            username_text + triangle + mess_box + '</div></li>';
-
-    }
 
     $('#send_chat').click(function() {
         socket_room.send(JSON.stringify({
             'message': $('#chat_input').val(),
-            'user': $('header h2 p').text()
+            'user': $('header h2 p').text(),
+            'date': Date(Date.now()).toString(),
         }));
     });
-
-
 });
